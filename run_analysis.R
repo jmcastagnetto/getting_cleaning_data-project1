@@ -1,32 +1,29 @@
 # run_analysis.R
 
+# loads data from the apropriate file in the .zip archive
+load_data <- function(fname) {
+    read.table(unz("UCI HAR Dataset.zip",
+                   paste0("UCI HAR Dataset/", fname)),
+               header = FALSE,
+               stringsAsFactors = FALSE)
+}
+
+# loads all the pieces for the training or test data sets
+build_dataset <- function(ds) {
+    ds_subject <- load_data(paste0(ds, "/subject_", ds ,".txt"))
+    ds_X <-  load_data(paste0(ds, "/X_", ds, ".txt"))
+    ds_y <-  load_data(paste0(ds, "/y_", ds, ".txt"))
+    ds <- cbind(ds_subject, ds_X, ds_y)
+}
+
 # 1.  Merges the training and the test sets to create one data set.
-train_subject <- read.table(unz("UCI HAR Dataset.zip", "UCI HAR Dataset/train/subject_train.txt"), header = FALSE)
-train_X <-  read.table(unz("UCI HAR Dataset.zip",
-                           "UCI HAR Dataset/train/X_train.txt"),
-                       header = FALSE)
-train_y <-  read.table(unz("UCI HAR Dataset.zip",
-                           "UCI HAR Dataset/train/y_train.txt"),
-                       header = FALSE)
-train <- cbind(train_subject, train_X, train_y)
 
-test_subject <- read.table(unz("UCI HAR Dataset.zip", "UCI HAR Dataset/test/subject_test.txt"), header = FALSE)
-test_X <-  read.table(unz("UCI HAR Dataset.zip",
-                           "UCI HAR Dataset/test/X_test.txt"),
-                       header = FALSE)
-test_y <-  read.table(unz("UCI HAR Dataset.zip",
-                           "UCI HAR Dataset/test/y_test.txt"),
-                       header = FALSE)
-test <- cbind(test_subject, test_X, test_y)
-
+train <- build_dataset("train")
+test <- build_dataset("test")
 data <- rbind(train, test)
 
-features <- read.table(unz("UCI HAR Dataset.zip",
-                           "UCI HAR Dataset/features.txt"),
-                       header = FALSE, stringsAsFactors = FALSE)
-
-columns <- c("subject_id", features[,"V2"], "activity_id")
-colnames(data) <- columns
+features <- load_data("features.txt")
+colnames(data) <- c("subject_id", features[,"V2"], "activity_id")
 
 # 2.  Extracts only the measurements on the mean and standard deviation
 #     for each measurement.
@@ -34,27 +31,31 @@ colnames(data) <- columns
 mns <- grepl(".*-mean.*", colnames(data))
 std <- grepl(".*-std.*", colnames(data))
 extcol <- mns | std
-d1 <- data[, 1]
-d2 <- data[, ncol(data)]
-d3 <- data[, extcol]
-data2 <- cbind(subject_id=d1,activity_id=d2,d3)
+data <- cbind(subject_id=data[, 1], activity_id=data[, ncol(data)],
+               data[, extcol])
 
-# 3.  Uses descriptive activity names to name the activities in the data set
-activity_labels <- read.table(unz("UCI HAR Dataset.zip",
-                                  "UCI HAR Dataset/activity_labels.txt"),
-                              header = FALSE, stringsAsFactors = FALSE)
-names(activity_labels) <- c("activity_id", "activity")
-data3 <- merge(data2, activity_labels, by="activity_id")
+# 3.  Uses descriptive activity names to name the activities in
+#     the data set
+
+activity_labels <- load_data("activity_labels.txt")
+colnames(activity_labels) <- c("activity_id", "activity")
+data <- merge(data, activity_labels, by="activity_id")
 
 # 4.  Appropriately labels the data set with descriptive variable names.
 
-colnames(data3) <- gsub("-", "_", gsub("[)(,]","", colnames(data3)), fixed = TRUE)
+colnames(data) <- gsub("-", "_", gsub("[)(,]","", colnames(data)), fixed = TRUE)
+# save some space storing the data set in compressed form
+write.csv(data, file = gzfile("ucihar_dataset.csv.gz"), row.names = FALSE)
+#saveRDS(data, file = "ucihar_dataset.RDS")
 
 # 5.  Creates a second, independent tidy data set with the average of
 #     each variable for each activity and each subject.
 
 library(reshape2)
 library(dplyr)
-data4 <- melt(data3, id.vars = c("subject_id","activity_id","activity"))
-data5 <- data4[,-c(2)] %>% group_by(subject_id,activity,variable) %>%
+tidy <- melt(data[, -1], id.vars = c("subject_id","activity")) %>%
+    group_by(subject_id,activity,variable) %>%
     summarise(mean=mean(value))
+
+write.csv(tidy, file = "ucihar_tidy_dataset.csv", row.names = FALSE)
+#saveRDS(tidy, file= "ucihar_tidy_dataset.RDS")
