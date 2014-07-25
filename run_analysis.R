@@ -71,6 +71,8 @@ tidy <- melt(data[, -1], id.vars = c("subject_id","activity")) %>%
     group_by(subject_id,activity,variable) %>%
     summarise(mean=mean(value))
 tidy <- dcast(tidy, subject_id + activity ~ variable, value.var="mean")
+# write.table(colnames(tidy), file = "Codebook.md", sep = "",
+#             quote = FALSE, row.names = FALSE, col.names = FALSE)
 
 write.csv(tidy, file = "ucihar_tidy_dataset.csv", row.names = FALSE)
 #saveRDS(tidy, file= "ucihar_tidy_dataset.RDS")
