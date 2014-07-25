@@ -28,8 +28,8 @@ colnames(data) <- c("subject_id", features[,"V2"], "activity_id")
 # 2.  Extracts only the measurements on the mean and standard deviation
 #     for each measurement.
 
-mns <- grepl(".*-mean.*", colnames(data))
-std <- grepl(".*-std.*", colnames(data))
+mns <- grepl(".*-mean\\(.*", colnames(data))
+std <- grepl(".*-std\\(.*", colnames(data))
 extcol <- mns | std
 data <- cbind(subject_id=data[, 1], activity_id=data[, ncol(data)],
                data[, extcol])
@@ -43,7 +43,21 @@ data <- merge(data, activity_labels, by="activity_id")
 
 # 4.  Appropriately labels the data set with descriptive variable names.
 
-colnames(data) <- gsub("-", "_", gsub("[)(,]","", colnames(data)), fixed = TRUE)
+# remove extraneous characters
+fields <- gsub("[)(,]","", colnames(data))
+fields <- gsub("-", "_", fields, fixed = TRUE)
+fields <- gsub("^t", "TimeDomain_", fields)
+fields <- gsub("^f", "FrequencyDomain_", fields)
+fields <- gsub("BodyBody", "Body_", fields, fixed = TRUE)
+fields <- gsub("Body", "Body_", fields, fixed = TRUE)
+fields <- gsub("Acc", "Accelerometer_", fields, fixed = TRUE)
+fields <- gsub("Gyro", "Gyroscope_", fields, fixed = TRUE)
+fields <- gsub("Mag", "Magnitude_", fields, fixed = TRUE)
+fields <- gsub("Gravity", "Gravity_", fields, fixed = TRUE)
+fields <- gsub("Jerk", "Jerk_", fields, fixed = TRUE)
+fields <- gsub("__", "_", fields, fixed = TRUE)
+colnames(data) <- fields
+
 # save some space storing the data set in compressed form
 write.csv(data, file = gzfile("ucihar_dataset.csv.gz"), row.names = FALSE)
 #saveRDS(data, file = "ucihar_dataset.RDS")
@@ -56,6 +70,7 @@ library(dplyr)
 tidy <- melt(data[, -1], id.vars = c("subject_id","activity")) %>%
     group_by(subject_id,activity,variable) %>%
     summarise(mean=mean(value))
+tidy <- dcast(tidy, subject_id + activity ~ variable, value.var="mean")
 
 write.csv(tidy, file = "ucihar_tidy_dataset.csv", row.names = FALSE)
 #saveRDS(tidy, file= "ucihar_tidy_dataset.RDS")
