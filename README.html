@@ -105,7 +105,7 @@ data &lt;- cbind(subject_id=data[, 1], activity_id=data[, ncol(data)],
 colnames(activity_labels) &lt;- c(&quot;activity_id&quot;, &quot;activity&quot;)
 activity_labels$activity &lt;- gsub(&quot;_&quot;, &quot; &quot;, activity_labels$activity, fixed = TRUE)
 data &lt;- merge(data, activity_labels, by=&quot;activity_id&quot;)</code></pre>
-<p>We then clean up a bit the variable (column) names, getting rid of all the extraneous characters (parenthesis, commas, etc.), and also replacing the abbreviations for complete words (e.g. Acc -&gt; Accelerometer).</p>
+<p>I then clean up a bit the variable (column) names, getting rid of all the extraneous characters (parenthesis, commas, etc.), and also replacing the abbreviations for complete words (e.g. Acc -&gt; Accelerometer).</p>
 <p>To help with this task we defined a <code>cleanup</code> function that takes as parameters: 1. A list with three components: the string or pattern to be replaced (“from”), the replacement (“to”), and a flag to indicate whether we are using a fixed pattern (“fixed”) 2. The character vector with the column names we want to clean up</p>
 <pre><code>cleanup &lt;- function(clist, orig) {
     out &lt;- orig
@@ -128,7 +128,7 @@ data &lt;- merge(data, activity_labels, by=&quot;activity_id&quot;)</code></pre>
 colnames(data) &lt;- cleanup(clist, colnames(data))</code></pre>
 <p>Finally, I need to create a tidy data set containing “… the average of each variable for each activity and each subject …”.</p>
 <p>To make things cleaner and more readable, I am using a couple of packages: <code>reshape2</code> and <code>dplyr</code> (which is similar to <code>plyr</code> but only deals with data frames and provides function call chaining).</p>
-<p>For obatining the tidy data set:</p>
+<p>The steps for obtaining the requested tidy data set are:</p>
 <ol style="list-style-type: decimal">
 <li>first convert it to a “long” version using <code>melt()</code></li>
 <li>then calculate the mean values (<code>summarise()</code>) for each variable, grouping by subject and activity (<code>group_by()</code>)</li>

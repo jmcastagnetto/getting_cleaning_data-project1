@@ -103,7 +103,7 @@ activity_labels$activity <- gsub("_", " ", activity_labels$activity, fixed = TRU
 data <- merge(data, activity_labels, by="activity_id")
 ~~~
 
-We then clean up a bit the variable (column) names, getting rid of all
+I then clean up a bit the variable (column) names, getting rid of all
 the extraneous characters (parenthesis, commas, etc.), and also 
 replacing the abbreviations for complete words 
 (e.g. Acc -> Accelerometer).
@@ -149,7 +149,7 @@ To make things cleaner and more readable, I am using a couple of
 packages: `reshape2` and `dplyr` (which is similar to `plyr` but only
 deals with data frames and provides function call chaining). 
 
-For obatining the tidy data set:
+The steps for obtaining the requested tidy data set are:
 
 1. first convert it to a "long" version using `melt()`
 2. then calculate the mean values (`summarise()`) for each
