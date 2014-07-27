@@ -65,7 +65,7 @@ test <- build_dataset("test")
 data <- rbind(train, test)
 ~~~ 
 
-After the merged data set us created, appropiate column names are
+After the merged data set was created, appropiate column names are
 assigned using the names stored in the `features.txt` file:
 
 ~~~
@@ -74,14 +74,13 @@ colnames(data) <- c("subject_id", features[,"V2"], "activity_id")
 ~~~
 
 The assignment then asks to select the columns that correspond to the
-means and standard deviations.
+means and standard deviations. According to the documentation that
+accompanies de original data set, the columns we want have names that
+contain the strings `mean()` and `std()` respectively.
 
-According to the documentation that accompanies de original data set,
-the columns we want have names that contain the strings `mean()` and
-`std()` respectively.
-
-The columns are selected using the appropriate regular expressions, and
-then doing a union operation of the resulting logic vectors:
+Therefore the columns are selected using the appropriate regular
+expressions, and then doing a union operation of the resulting
+logic vectors:
 
 ~~~
 mns <- grepl(".*-mean\\(.*", colnames(data))
@@ -92,9 +91,10 @@ data <- cbind(subject_id=data[, 1], activity_id=data[, ncol(data)],
 ~~~
 
 To be able to assign appropriate activity labels, we read the ones
-defined in the file `activity_labels.txt`, and do some minor manipulations
-to get rid of the underscore ("_") in a couple of the values. After
-that we merge these activity labels with the data set obtained above:
+defined in the file `activity_labels.txt`, and do a minor manipulation
+to replace the underscore ("_") by a space in a couple of the values.
+After that we merge these activity labels with the data set obtained
+above:
 
 ~~~
 activity_labels <- load_data("activity_labels.txt")
@@ -103,15 +103,16 @@ activity_labels$activity <- gsub("_", " ", activity_labels$activity, fixed = TRU
 data <- merge(data, activity_labels, by="activity_id")
 ~~~
 
-Then, we cleanup a bit the variable (column) names, to get rid of all
-the extraneous characters (parenthesis, commas, etc.), and also to
-replace the abbreviations for complete words (e.g. Acc -> Accelerometer).
+We then clean up a bit the variable (column) names, getting rid of all
+the extraneous characters (parenthesis, commas, etc.), and also 
+replacing the abbreviations for complete words 
+(e.g. Acc -> Accelerometer).
 
 To help with this task we defined a `cleanup` function that takes as
 parameters:
     1. A list with three components: the string or pattern to be
-       replaced, the replacement, and a flag to indicate if we used a
-       fixed pattern or not
+       replaced ("from"), the replacement ("to"), and a flag to 
+       indicate whether we are using a fixed pattern ("fixed")
     2. The character vector with the column names we want to clean up
 
 ~~~
@@ -141,19 +142,20 @@ clist <- list(
 colnames(data) <- cleanup(clist, colnames(data))
 ~~~
 
-Finally, we create a tidy data set containing "... the average of each
-variable for each activity and each subject ...".
+Finally, I need to create a tidy data set containing "... the average
+of each variable for each activity and each subject ...".
 
 To make things cleaner and more readable, I am using a couple of
 packages: `reshape2` and `dplyr` (which is similar to `plyr` but only
 deals with data frames and provides function call chaining). 
 
-To make the tidy data set, we first generate a "long" version of it
-using `melt()`, then calculate the mean values (`summarise()`) for each
-variable, grouping by subject and activity (`group_by()`), and to finish
-we recreate the "wide" version of the data set using `dcast()`.
+For obatining the tidy data set:
 
-The resulting data set is saved to a text file.
+1. first convert it to a "long" version using `melt()`
+2. then calculate the mean values (`summarise()`) for each
+   variable, grouping by subject and activity (`group_by()`)
+3. reshape the result into a "wide" version using `dcast()`
+4. finally, save the resulting data set to a text file (`write.table()`)
 
 ~~~
 library(reshape2)
