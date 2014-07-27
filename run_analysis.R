@@ -65,9 +65,6 @@ clist <- list(
 
 colnames(data) <- cleanup(clist, colnames(data))
 
-# save some space storing the data set in compressed form
-write.csv(data, file = gzfile("ucihar_dataset.csv.gz"), row.names = FALSE)
-
 # 5.  Creates a second, independent tidy data set with the average of
 #     each variable for each activity and each subject.
 
