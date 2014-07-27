@@ -39,28 +39,34 @@ data <- cbind(subject_id=data[, 1], activity_id=data[, ncol(data)],
 
 activity_labels <- load_data("activity_labels.txt")
 colnames(activity_labels) <- c("activity_id", "activity")
+activity_labels$activity <- gsub("_", " ", activity_labels$activity, fixed = TRUE)
 data <- merge(data, activity_labels, by="activity_id")
 
 # 4.  Appropriately labels the data set with descriptive variable names.
 
 # remove extraneous characters
-fields <- gsub("[)(,]","", colnames(data))
-fields <- gsub("-", "_", fields, fixed = TRUE)
-fields <- gsub("^t", "TimeDomain_", fields)
-fields <- gsub("^f", "FrequencyDomain_", fields)
-fields <- gsub("BodyBody", "Body_", fields, fixed = TRUE)
-fields <- gsub("Body", "Body_", fields, fixed = TRUE)
-fields <- gsub("Acc", "Accelerometer_", fields, fixed = TRUE)
-fields <- gsub("Gyro", "Gyroscope_", fields, fixed = TRUE)
-fields <- gsub("Mag", "Magnitude_", fields, fixed = TRUE)
-fields <- gsub("Gravity", "Gravity_", fields, fixed = TRUE)
-fields <- gsub("Jerk", "Jerk_", fields, fixed = TRUE)
-fields <- gsub("__", "_", fields, fixed = TRUE)
-colnames(data) <- fields
+cleanup <- function(clist, orig) {
+    out <- orig
+    for(i in 1:length(clist[[1]])) {
+        out <- gsub(clist$from[i], clist$to[i], out, clist$fixed[i])
+    }
+    return(out)
+}
+
+clist <- list(
+            from=c("[)(,]", "^t", "^f",
+                   "-", "BodyBody", "Body", "Acc", "Gyro",
+                   "Mag", "Gravity", "Jerk", "__"),
+            to=c("", "TimeDomain_", "FrequencyDomain_",
+                 "_", "Body_", "Body_", "Accelerometer_", "Gyroscope_",
+                 "Magnitude_", "Gravity_", "Jerk_", "_"),
+            fixed=c(rep(FALSE, 3), rep(TRUE, 9))
+        )
+
+colnames(data) <- cleanup(clist, colnames(data))
 
 # save some space storing the data set in compressed form
 write.csv(data, file = gzfile("ucihar_dataset.csv.gz"), row.names = FALSE)
-#saveRDS(data, file = "ucihar_dataset.RDS")
 
 # 5.  Creates a second, independent tidy data set with the average of
 #     each variable for each activity and each subject.
@@ -69,10 +75,7 @@ library(reshape2)
 library(dplyr)
 tidy <- melt(data[, -1], id.vars = c("subject_id","activity")) %>%
     group_by(subject_id,activity,variable) %>%
-    summarise(mean=mean(value))
-tidy <- dcast(tidy, subject_id + activity ~ variable, value.var="mean")
-# write.table(colnames(tidy), file = "Codebook.md", sep = "",
-#             quote = FALSE, row.names = FALSE, col.names = FALSE)
+    summarise(mean=mean(value)) %>%
+    dcast(subject_id + activity ~ variable, value.var="mean")
 
-write.csv(tidy, file = "ucihar_tidy_dataset.csv", row.names = FALSE)
-#saveRDS(tidy, file= "ucihar_tidy_dataset.RDS")
+write.table(tidy, file = "ucihar_tidy_dataset.txt", row.names = FALSE, quote = TRUE)
