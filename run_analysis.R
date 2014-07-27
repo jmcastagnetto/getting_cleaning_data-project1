@@ -70,7 +70,7 @@ colnames(data) <- cleanup(clist, colnames(data))
 
 library(reshape2)
 library(dplyr)
-tidy <- melt(data[, -1], id.vars = c("subject_id","activity")) %>%
+tidy <- data[, -1] %>% melt(id.vars = c("subject_id","activity")) %>%
     group_by(subject_id,activity,variable) %>%
     summarise(mean=mean(value)) %>%
     dcast(subject_id + activity ~ variable, value.var="mean")
